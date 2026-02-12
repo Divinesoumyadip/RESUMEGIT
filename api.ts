@@ -1,7 +1,8 @@
 // ResumeGod V4.0 — API Client
 // Typed wrappers around all backend endpoints
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+// UPDATED: Pointing to your live Railway Backend
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://resumegit-production.up.railway.app'
 
 export interface GapAnalysis {
   ats_score_before: number
