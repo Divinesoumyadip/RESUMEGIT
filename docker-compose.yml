@@ -1,0 +1,68 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: resumegod-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - DATABASE_URL=${DATABASE_URL:-sqlite:///./resumegod.db}
+      - BASE_URL=${BASE_URL:-http://localhost:8000}
+      - IPINFO_TOKEN=${IPINFO_TOKEN:-}
+    volumes:
+      - backend_db:/app/resumegod.db
+      - resume_pdfs:/tmp/resumegod_pdfs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - resumegod-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: resumegod-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - resumegod-net
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: resumegod-postgres
+    restart: unless-stopped
+    profiles: ["prod"]
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-resumegod}
+      - POSTGRES_USER=${POSTGRES_USER:-resumegod}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme_in_prod}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - resumegod-net
+
+networks:
+  resumegod-net:
+    driver: bridge
+
+volumes:
+  backend_db:
+  resume_pdfs:
+  postgres_data:
