@@ -1,1 +1,18 @@
-{"name":"resumegod","version":"0.1.0","scripts":{"build":"next build","start":"next start"},"dependencies":{"next":"14.2.3","react":"^18","react-dom":"^18"}}
+{
+  "name": "resumegit",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "next": "14.2.3",
+    "react": "^18",
+    "react-dom": "^18",
+    "lucide-react": "^0.378.0",
+    "framer-motion": "^11.1.7"
+  }
+}
