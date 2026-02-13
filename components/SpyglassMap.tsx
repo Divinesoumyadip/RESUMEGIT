@@ -7,7 +7,7 @@ import {
   Globe, TrendingUp, Copy, Check, Radio
 } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
-import type { SpyglassStats, TrackingEvent } from '@/lib/api'
+import type { SpyglassStats, TrackingEvent } from '../lib/api'
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 interface SpyglassMapProps {

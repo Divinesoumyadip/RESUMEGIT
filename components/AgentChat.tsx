@@ -6,7 +6,7 @@ import {
   X, Send, Cpu, User, Zap, Shield, Eye, Mic,
   PenTool, BookOpen, Loader2, Minimize2
 } from 'lucide-react'
-import { sendChatMessage } from '@/lib/api'
+import { sendChatMessage } from '../lib/api'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Message {
