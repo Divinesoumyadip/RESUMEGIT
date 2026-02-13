@@ -27,7 +27,19 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(title="ResumeGod V4.0", lifespan=lifespan)
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
+
+# ✅ NEW ROOT ROUTE ADDED
+@app.get("/")
+async def root():
+    return {"message": "ResumeGod Backend Running"}
 
 @app.get("/health")
 async def health():
