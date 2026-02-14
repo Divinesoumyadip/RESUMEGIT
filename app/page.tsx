@@ -1,45 +1,27 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useUser } from '@clerk/nextjs' // ✅ Get user data automatically
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Upload, Zap, Shield, Eye, Mic, FileText, Check, 
   AlertTriangle, Loader2, TrendingUp, Download, 
-  Copy, BookOpen, PenTool, X 
+  PenTool, BookOpen
 } from 'lucide-react'
 
-// ─── INTERNAL API LOGIC ───────────────────────────────────────────────────
-const API_URL = 'https://resumegit-production.up.railway.app'
-
-async function uploadResume(file: File, userEmail: string) {
-  const form = new FormData()
-  form.append('file', file)
-  form.append('user_email', userEmail)
-  const res = await fetch(`${API_URL}/api/resume/upload`, { method: 'POST', body: form })
-  if (!res.ok) throw new Error('Upload failed')
-  return res.json()
-}
-
-async function optimizeResume(resumeId: string, jobDescription: string) {
-  const res = await fetch(`${API_URL}/api/optimize`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ resume_id: resumeId, job_description: jobDescription }),
-  })
-  if (!res.ok) throw new Error('Optimization failed')
-  return res.json()
-}
+// Use the Environment Variable we set in Vercel
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://resumegit-production.up.railway.app'
 
 // ─── SWARM AGENT NAVIGATION ──────────────────────────────────────────────────
 const SWARM_AGENTS = [
   { id: 'ats', name: 'ATS Sentinel', icon: Shield, status: 'ACTIVE' },
-  { id: 'spyglass', name: 'Spyglass Tracker', icon: Eye, status: 'OFFLINE' },
-  { id: 'interviewer', name: 'The Interviewer', icon: Mic, status: 'OFFLINE' },
-  { id: 'ghostwriter', name: 'Ghostwriter', icon: PenTool, status: 'OFFLINE' },
-  { id: 'affiliate', name: 'The Affiliate', icon: BookOpen, status: 'OFFLINE' },
+  { id: 'spyglass', name: 'Spyglass Tracker', icon: Eye, status: 'LOCKED' },
+  { id: 'interviewer', name: 'The Interviewer', icon: Mic, status: 'LOCKED' },
+  { id: 'ghostwriter', name: 'Ghostwriter', icon: PenTool, status: 'LOCKED' },
+  { id: 'affiliate', name: 'The Affiliate', icon: BookOpen, status: 'LOCKED' },
 ]
 
-// ─── SCORE RING COMPONENT ──────────────────────────────────────────────────
+// ─── COMPONENT: SCORE RING ──────────────────────────────────────────────────
 function ScoreRing({ score, label, color, isAfter = false }: { score: number; label: string; color: string; isAfter?: boolean }) {
   const circumference = 2 * Math.PI * 58
   const offset = circumference - (score / 100) * circumference
@@ -69,7 +51,7 @@ function ScoreRing({ score, label, color, isAfter = false }: { score: number; la
         {isAfter && (
           <div className="flex items-center justify-center gap-1 mt-1">
             <TrendingUp className="w-3 h-3 text-green-500" />
-            <span className="text-xs font-bold text-green-500">OPTIMIZED</span>
+            <span className="text-xs font-bold text-green-500 tracking-tighter">OPTIMIZED</span>
           </div>
         )}
       </div>
@@ -77,55 +59,77 @@ function ScoreRing({ score, label, color, isAfter = false }: { score: number; la
   )
 }
 
-// ─── MAIN MISSION CONTROL ──────────────────────────────────────────────────
+// ─── MAIN COMPONENT ──────────────────────────────────────────────────
 export default function MissionControl() {
+  const { user } = useUser() // ✅ Access Clerk User
   const [activeAgent, setActiveAgent] = useState('ats')
-  const [resumeId, setResumeId] = useState<string | null>(null)
-  const [email, setEmail] = useState('')
   const [jobDescription, setJobDescription] = useState('')
   const [processing, setProcessing] = useState(false)
+  const [statusMessage, setStatusMessage] = useState('Initializing...')
   const [result, setResult] = useState<any>(null)
   const [file, setFile] = useState<File | null>(null)
   const [dragActive, setDragActive] = useState(false)
   const [showResults, setShowResults] = useState(false)
 
   const handleUploadAndOptimize = async () => {
-    if (!file || !email || !jobDescription) return
+    if (!file || !jobDescription) return
     setProcessing(true)
+    setStatusMessage('Uploading to Swarm...')
+
     try {
-      const uploadRes = await uploadResume(file, email)
-      setResumeId(uploadRes.resume_id)
-      const optimizeRes = await optimizeResume(uploadRes.resume_id, jobDescription)
-      setResult(optimizeRes)
+      // 1. UPLOAD
+      const form = new FormData()
+      form.append('file', file)
+      form.append('user_email', user?.primaryEmailAddress?.emailAddress || 'guest@resumegod.ai')
+
+      const uploadRes = await fetch(`${API_URL}/api/resume/upload`, { 
+        method: 'POST', 
+        body: form 
+      })
+      const uploadData = await uploadRes.json()
+
+      // 2. OPTIMIZE
+      setStatusMessage('ATS Sentinel Analyzing...')
+      const optimizeRes = await fetch(`${API_URL}/api/optimize`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          resume_id: uploadData.resume_id, 
+          job_description: jobDescription 
+        }),
+      })
+      
+      const optimizeData = await optimizeRes.json()
+      setResult(optimizeData)
       setShowResults(true)
     } catch (e) {
-      alert("System Overload: Could not process request.")
+      console.error(e)
+      alert("System Overload: Swarm connection lost.")
+    } finally {
+      setProcessing(false)
     }
-    setProcessing(false)
   }
 
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-amber-500/30">
+      {/* Background Grid */}
       <div className="fixed inset-0 bg-[linear-gradient(to_right,#111_1px,transparent_1px),linear-gradient(to_bottom,#111_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-20 pointer-events-none" />
       
       <div className="relative flex">
         {/* SIDEBAR */}
-        <aside className="w-72 border-r border-gray-900 min-h-screen bg-black p-6 flex flex-col gap-8 hidden md:flex">
+        <aside className="w-72 border-r border-gray-900 min-h-screen bg-black p-6 flex flex-col gap-8 hidden md:flex sticky top-0">
           <div className="flex items-center gap-3 pb-6 border-b border-gray-800">
             <Zap className="text-amber-500 w-8 h-8" />
             <span className="font-black text-2xl tracking-tighter italic bg-gradient-to-r from-white to-amber-500 bg-clip-text text-transparent">RESUMEGOD</span>
           </div>
-          <div className="flex items-center gap-2 px-3 py-2 bg-amber-500/10 border border-amber-500/30 rounded-lg">
-            <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
-            <span className="text-xs font-mono text-amber-500 tracking-wider uppercase">System Live</span>
-          </div>
+          
           <nav className="flex-1 space-y-2">
             {SWARM_AGENTS.map((agent) => (
-              <button key={agent.id} className={`w-full px-4 py-3 rounded-xl flex items-center gap-3 transition-all ${activeAgent === agent.id ? 'bg-amber-500/20 border border-amber-500/50' : 'opacity-40 hover:opacity-100'}`}>
-                <agent.icon className="w-5 h-5 text-amber-500" />
+              <button key={agent.id} className={`w-full px-4 py-3 rounded-xl flex items-center gap-3 transition-all ${activeAgent === agent.id ? 'bg-amber-500/10 border border-amber-500/40 shadow-[0_0_15px_rgba(245,158,11,0.1)]' : 'opacity-30 hover:opacity-60 grayscale'}`}>
+                <agent.icon className={`w-5 h-5 ${activeAgent === agent.id ? 'text-amber-500' : 'text-gray-400'}`} />
                 <div className="text-left">
-                  <p className="text-sm font-bold">{agent.name}</p>
-                  <p className="text-[10px] font-mono text-gray-500">{agent.status}</p>
+                  <p className="text-sm font-bold tracking-tight">{agent.name}</p>
+                  <p className="text-[9px] font-mono text-gray-500 uppercase">{agent.status}</p>
                 </div>
               </button>
             ))}
@@ -138,58 +142,81 @@ export default function MissionControl() {
             {!showResults ? (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-8">
                 <div>
-                  <h1 className="text-6xl font-black mb-4 tracking-tighter uppercase">Initialize Swarm</h1>
-                  <p className="text-gray-500 font-mono italic">Phase 1: Deep scan and keyword injection.</p>
+                  <h1 className="text-7xl font-black mb-4 tracking-tighter uppercase leading-[0.9]">Deploy<br/><span className="text-amber-500">The Swarm</span></h1>
+                  <p className="text-gray-500 font-mono italic">Logged in as: {user?.firstName || 'Operator'}</p>
                 </div>
 
-                <div className={`border-2 border-dashed rounded-3xl p-16 text-center transition-all ${dragActive ? 'border-amber-500 bg-amber-500/5' : 'border-gray-800 bg-gray-950/50 hover:border-gray-700'}`}
+                {/* Dropzone */}
+                <div 
+                  className={`border-2 border-dashed rounded-3xl p-16 text-center transition-all cursor-pointer ${dragActive ? 'border-amber-500 bg-amber-500/5 scale-[0.99]' : 'border-gray-800 bg-gray-950/50 hover:border-gray-700'}`}
                   onDragOver={(e) => { e.preventDefault(); setDragActive(true) }}
                   onDragLeave={() => setDragActive(false)}
                   onDrop={(e) => { e.preventDefault(); setDragActive(false); setFile(e.dataTransfer.files[0]) }}
                   onClick={() => document.getElementById('fInput')?.click()}
                 >
-                  <input id="fInput" type="file" hidden onChange={(e) => setFile(e.target.files?.[0] || null)} />
+                  <input id="fInput" type="file" hidden accept=".pdf" onChange={(e) => setFile(e.target.files?.[0] || null)} />
                   <Upload className="mx-auto w-12 h-12 mb-4 text-amber-500" />
-                  <p className="text-xl font-bold">{file ? file.name : "Select Resume PDF"}</p>
+                  <p className="text-xl font-bold">{file ? file.name : "Target Artifact (PDF)"}</p>
+                  <p className="text-gray-500 text-sm mt-2 font-mono">DRAG AND DROP TO INJECT</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <input type="email" placeholder="Contact Intelligence (Email)" className="bg-gray-900 border border-gray-800 p-4 rounded-xl focus:border-amber-500 outline-none font-mono" value={email} onChange={e => setEmail(e.target.value)} />
-                  <textarea placeholder="Paste Job Description for Target Mission..." className="bg-gray-900 border border-gray-800 p-4 rounded-xl h-32 focus:border-amber-500 outline-none resize-none" value={jobDescription} onChange={e => setJobDescription(e.target.value)} />
+                <div className="space-y-4">
+                  <p className="text-xs font-mono text-amber-500/60 uppercase tracking-[0.2em]">Mission Parameters</p>
+                  <textarea 
+                    placeholder="Paste the Job Description. The Swarm will scout for weaknesses..." 
+                    className="w-full bg-gray-900/50 border border-gray-800 p-6 rounded-2xl h-48 focus:border-amber-500 outline-none resize-none transition-all focus:bg-gray-900"
+                    value={jobDescription} 
+                    onChange={e => setJobDescription(e.target.value)} 
+                  />
                 </div>
 
-                <button onClick={handleUploadAndOptimize} disabled={!file || !email || !jobDescription || processing} className="w-full bg-amber-500 text-black py-6 rounded-2xl font-black text-2xl hover:bg-amber-400 disabled:opacity-20 transition-all shadow-lg shadow-amber-500/20">
-                  {processing ? <Loader2 className="mx-auto animate-spin" /> : "DEPLOY AGENTS"}
+                <button 
+                  onClick={handleUploadAndOptimize} 
+                  disabled={!file || !jobDescription || processing} 
+                  className="w-full bg-amber-500 text-black py-6 rounded-2xl font-black text-2xl hover:bg-amber-400 disabled:opacity-20 transition-all flex items-center justify-center gap-3 active:scale-[0.98]"
+                >
+                  {processing ? (
+                    <>
+                      <Loader2 className="animate-spin w-8 h-8" />
+                      <span className="animate-pulse">{statusMessage}</span>
+                    </>
+                  ) : "INITIATE OPTIMIZATION"}
                 </button>
               </motion.div>
             ) : (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-12">
-                <div className="flex justify-between items-end border-b border-gray-800 pb-6">
-                  <h2 className="text-4xl font-black text-amber-500 italic">SENTINEL FEEDBACK</h2>
-                  <button onClick={() => setShowResults(false)} className="text-gray-500 hover:text-white font-mono text-xs">NEW MISSION</button>
+              <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="space-y-12">
+                <div className="flex justify-between items-center border-b border-gray-800 pb-8">
+                  <div>
+                    <h2 className="text-5xl font-black text-white tracking-tighter italic">MISSION COMPLETE</h2>
+                    <p className="text-gray-500 font-mono text-sm mt-1">SENTINEL FEEDBACK GENERATED</p>
+                  </div>
+                  <button onClick={() => setShowResults(false)} className="px-6 py-2 border border-gray-800 rounded-full hover:bg-white hover:text-black transition-all font-mono text-xs">NEW MISSION</button>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="bg-gray-900/50 p-10 rounded-3xl border border-gray-800"><ScoreRing score={result.ats?.gap_analysis?.ats_score_before || 0} label="Initial Scan" color="#ef4444" /></div>
-                  <div className="bg-gray-900/50 p-10 rounded-3xl border border-amber-500/20"><ScoreRing score={result.ats?.gap_analysis?.ats_score_after || 0} label="Optimized Scan" color="#22c55e" isAfter /></div>
+                  <div className="bg-gray-900/30 p-10 rounded-[2.5rem] border border-gray-900 flex justify-center"><ScoreRing score={result.ats?.gap_analysis?.ats_score_before || 0} label="Original Score" color="#ef4444" /></div>
+                  <div className="bg-gray-900/30 p-10 rounded-[2.5rem] border border-amber-500/20 flex justify-center"><ScoreRing score={result.ats?.gap_analysis?.ats_score_after || 0} label="Optimized Score" color="#22c55e" isAfter /></div>
                 </div>
 
                 {result.ats?.gap_analysis?.roast && (
-                  <div className="p-8 bg-red-500/5 border border-red-500/20 rounded-2xl relative overflow-hidden">
-                    <div className="absolute top-0 left-0 h-1 w-full bg-red-500" />
-                    <h3 className="text-red-500 font-black mb-2 flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> ROAST MODE</h3>
-                    <p className="text-gray-300 italic font-mono">"{result.ats.gap_analysis.roast}"</p>
+                  <div className="p-8 bg-red-500/5 border border-red-500/20 rounded-3xl relative overflow-hidden group">
+                    <div className="absolute top-0 left-0 h-1 w-full bg-red-500/50" />
+                    <h3 className="text-red-500 font-black mb-3 flex items-center gap-2 tracking-widest text-sm uppercase"><AlertTriangle className="w-4 h-4" /> Sentinel Roast</h3>
+                    <p className="text-gray-300 italic font-mono text-lg leading-relaxed">"{result.ats.gap_analysis.roast}"</p>
                   </div>
                 )}
 
-                <div className="flex flex-wrap gap-2">
-                  {result.ats?.gap_analysis?.missing_keywords?.map((kw: string, i: number) => (
-                    <span key={i} className="px-3 py-1 bg-amber-500/10 border border-amber-500/30 text-amber-500 rounded-full text-xs font-mono">{kw}</span>
-                  ))}
+                <div className="space-y-4">
+                   <p className="text-xs font-mono text-gray-500 uppercase tracking-widest">Missing Intelligence (Keywords)</p>
+                   <div className="flex flex-wrap gap-2">
+                    {result.ats?.gap_analysis?.missing_keywords?.map((kw: string, i: number) => (
+                      <span key={i} className="px-4 py-2 bg-amber-500/5 border border-amber-500/20 text-amber-500 rounded-xl text-xs font-mono font-bold tracking-tight">+{kw}</span>
+                    ))}
+                  </div>
                 </div>
 
                 {result.optimized_resume_url && (
-                  <a href={result.optimized_resume_url} download className="block w-full bg-green-500 text-black py-5 rounded-2xl font-black text-center hover:bg-green-400 transition-all">
+                  <a href={result.optimized_resume_url} download className="block w-full bg-white text-black py-6 rounded-3xl font-black text-center text-xl hover:bg-amber-500 transition-all shadow-[0_20px_40px_rgba(0,0,0,0.3)]">
                     DOWNLOAD OPTIMIZED ARTIFACT
                   </a>
                 )}
