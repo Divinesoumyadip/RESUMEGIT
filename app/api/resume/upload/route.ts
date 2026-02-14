@@ -1,13 +1,17 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
-    // This is where we will eventually add the AI processing logic
+    // In a real SDE scenario, we'd use formidable or busboy here, 
+    // but for now, we're just confirming the 'door' is open.
+    console.log("🚀 SWARM NOTIFICATION: Data packet received at /api/resume/upload");
+
     return NextResponse.json({ 
       success: true, 
-      message: "Resume received by the Swarm. Processing initialized." 
+      message: "RESUMEGOD: Connection established. Swarm processing initialized." 
     });
   } catch (error) {
-    return NextResponse.json({ success: false, error: "Swarm processing failed" }, { status: 500 });
+    console.error("❌ SWARM ERROR:", error);
+    return NextResponse.json({ success: false, error: "Packet loss in the swarm" }, { status: 500 });
   }
 }
