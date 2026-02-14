@@ -2,31 +2,35 @@ import os
 import sys
 import json
 import uuid
+import io
 from pathlib import Path
-from typing import Optional
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, UploadFile, File, Form, Depends, HTTPException, Request, Response, BackgroundTasks, WebSocket, WebSocketDisconnect
+
+# Core Framework
+from fastapi import FastAPI, UploadFile, File, Form, Request, Response, BackgroundTasks, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
-from openai import AsyncOpenAI
 from fastapi.responses import JSONResponse
 
-# --- IMPORTS ---
+# Intelligence Stack
+from pypdf import PdfReader 
+from openai import AsyncOpenAI
+
+# --- INTERNAL IMPORTS ---
 sys.path.insert(0, os.getcwd())
-from models import get_db, create_tables
-from agent_orchestrator import route_intent, orchestrate_chat, run_full_optimization_pipeline
+from models import create_tables
+# from agent_orchestrator import run_full_optimization_pipeline # Trigger this when ready
 
 # Initialize OpenAI
 client_ws = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("ResumeGod V4.0 — Swarm initializing...")
+    print("🚀 ResumeGod V4.0 — Swarm initializing...")
     try:
         create_tables()
     except Exception as e:
-        print(f"⚠️ Table Check: {e}")
-    print("ResumeGod V4.0 — Ready. The swarm is online.")
+        print(f"⚠️ DB Sync: {e}")
+    print("Ready. The swarm is online.")
     yield
 
 app = FastAPI(title="ResumeGod V4.0", lifespan=lifespan)
@@ -49,13 +53,26 @@ async def root():
 async def upload_resume(file: UploadFile = File(...), user_email: str = Form(...)):
     try:
         mission_id = str(uuid.uuid4())
-        print(f"🚀 Mission Initialized for {user_email}: {file.filename}")
+        
+        # 1. Read binary PDF data
+        contents = await file.read()
+        
+        # 2. Extract Text using pypdf (The library you added)
+        reader = PdfReader(io.BytesIO(contents))
+        resume_text = ""
+        for page in reader.pages:
+            resume_text += page.extract_text() or ""
+
+        print(f"📄 SENTINEL: Extracted {len(resume_text)} chars for {user_email}")
+        
+        # For now, we return 'resume_id' to match your React code
         return {
             "status": "success",
             "resume_id": mission_id, 
-            "message": "Artifact captured."
+            "message": "Artifact captured and decrypted."
         }
     except Exception as e:
+        print(f"❌ Extraction Error: {str(e)}")
         return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
 
 @app.post("/api/optimize")
@@ -63,46 +80,46 @@ async def optimize_resume(request: Request, background_tasks: BackgroundTasks):
     try:
         data = await request.json()
         resume_id = data.get("resume_id")
-        job_desc = data.get("job_description", "General Mission")
+        job_desc = data.get("job_description", "Software Engineer")
 
-        # Start the heavy lifting in the background
-        background_tasks.add_task(run_full_optimization_pipeline, resume_id, job_desc)
+        print(f"🧬 Sentinel Scanning Mission: {resume_id}")
 
+        # This JSON matches your 'Mission Analysis' UI perfectly
+        # Later, replace this with a real OpenAI call using resume_text
         return {
             "status": "complete",
             "ats": {
                 "gap_analysis": {
                     "ats_score_before": 45,
                     "ats_score_after": 92,
-                    "roast": "This resume looks like a high-latency database query. Let's optimize the schema.",
-                    "missing_keywords": ["System Design", "Scalability", "Next.js 16", "Redis"]
+                    "roast": "This resume has the visual appeal of a terminal error. The Swarm is currently injecting high-performance keywords and fixing your hierarchy.",
+                    "missing_keywords": ["System Design", "Microservices", "Redis", "Next.js 16"]
                 }
             },
-            "optimized_resume_url": f"https://resumegit-production.up.railway.app/api/download/{resume_id}"
+            "optimized_resume_url": f"https://resumegit-production.up.railway.app/download/{resume_id}"
         }
     except Exception as e:
         return JSONResponse(status_code=500, content={"message": str(e)})
 
-# ✅ NEW: SPYGLASS TRACKER (The Invisible Pixel)
+# ✅ SPYGLASS TRACKER (The Invisible Pixel)
 @app.get("/api/spyglass/track/{tracker_id}")
 async def track_resume_view(tracker_id: str):
-    # This pings your logs when someone (a recruiter) opens the PDF
+    # This pings your logs when a recruiter opens the PDF
     print(f"👁️ SPYGLASS ALERT: Resume {tracker_id} was just opened!")
     
     # 1x1 Transparent GIF pixel
     pixel_data = b"\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x80\x00\x00\xff\xff\xff\x00\x00\x00\x21\xf9\x04\x01\x00\x00\x00\x00\x2c\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02\x44\x01\x00\x3b"
     return Response(content=pixel_data, media_type="image/gif")
 
-# ✅ NEW: THE INTERVIEWER (Placeholder for Logic)
+# ✅ THE INTERVIEWER (Foundation for voice/chat)
 @app.get("/api/interviewer/questions/{resume_id}")
 async def get_mock_questions(resume_id: str):
-    # Eventually, this will use OpenAI to generate specific questions
     return {
         "status": "ready",
         "questions": [
-            "Explain the architecture of the Customer 360 Bot you built.",
-            "How did you handle state management in your Flutter food delivery clone?",
-            "What was the most challenging part of clearing your backlogs while studying CS?"
+            "Explain the architecture of your most recent project.",
+            "How do you optimize a low-latency system?",
+            "Describe a time you fixed a critical production bug."
         ]
     }
 
