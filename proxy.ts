@@ -1,18 +1,11 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
-import { NextResponse } from 'next/server';
 
+// Ensure /dashboard is specifically EXCLUDED from public routes
 const isPublicRoute = createRouteMatcher(['/', '/sign-in(.*)', '/sign-up(.*)']);
 
-export default clerkMiddleware(async (auth, req) => {
-  const { userId } = await auth();
-
-  // If the user is logged in and tries to access a public route, redirect to dashboard
-  if (userId && isPublicRoute(req)) {
-    return NextResponse.redirect(new URL('/dashboard', req.url));
-  }
-
-  // Protect the dashboard
-  if (!isPublicRoute(req)) {
+export default clerkMiddleware(async (auth, request) => {
+  if (!isPublicRoute(request)) {
+    // If not public, force Clerk protection
     await auth.protect();
   }
 });
