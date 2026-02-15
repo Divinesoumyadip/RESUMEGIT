@@ -1,23 +1,26 @@
-import { db } from './db';
-import { auth, currentUser } from '@clerk/nextjs/server';
+import { currentUser } from '@clerk/nextjs/server';
+import { prisma } from './db';
 
-export const syncUser = async () => {
-  const user = await currentUser();
-  if (!user) return null;
+export async function syncUser() {
+  const clerkUser = await currentUser();
 
-  const existingUser = await db.user.findUnique({
-    where: { clerkId: user.id }
+  if (!clerkUser) return null;
+
+  // Check if user already exists in Supabase
+  const existingUser = await prisma.user.findUnique({
+    where: { clerkId: clerkUser.id },
   });
 
-  if (!existingUser) {
-    return await db.user.create({
-      data: {
-        clerkId: user.id,
-        email: user.emailAddresses[0].emailAddress,
-        credits: 10
-      }
-    });
-  }
+  if (existingUser) return existingUser;
 
-  return existingUser;
-};
+  // If not, create them with their 10 starting credits
+  const newUser = await prisma.user.create({
+    data: {
+      clerkId: clerkUser.id,
+      email: clerkUser.emailAddresses[0].emailAddress,
+      credits: 10,
+    },
+  });
+
+  return newUser;
+}
