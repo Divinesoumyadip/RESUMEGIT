@@ -1,9 +1,73 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Rajdhani:wght@300;500;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --amber-glow: 245 158 11; /* #f59e0b */
+    --charcoal: 5 5 5;        /* #050505 */
+  }
+
   body {
-    @apply bg-black text-white antialiased;
+    @apply bg-[#050505] text-white antialiased overflow-x-hidden;
+    font-family: 'Rajdhani', sans-serif;
+  }
+
+  /* Orbitron for tactical headings */
+  h1, h2, h3, h4, .font-tactical {
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: -0.02em;
+  }
+}
+
+@layer components {
+  /* High-end Glassmorphism */
+  .glass-tactical {
+    @apply bg-white/5 backdrop-blur-3xl border border-white/10;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+  }
+
+  /* Cyber-Amber Neon Button */
+  .btn-amber-neon {
+    @apply bg-amber-500 text-black font-black transition-all duration-500;
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.2);
+  }
+  
+  .btn-amber-neon:hover {
+    @apply bg-amber-400 scale-[1.02];
+    box-shadow: 0 0 40px rgba(245, 158, 11, 0.4);
+  }
+}
+
+@layer utilities {
+  /* The 4rem Swarm Grid */
+  .bg-swarm-grid {
+    background-size: 4rem 4rem;
+    background-image: 
+      linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  }
+
+  /* Mission Feed Animation */
+  @keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  .animate-marquee {
+    animation: marquee 40s linear infinite;
+  }
+
+  /* Custom Glow Scrollbar */
+  ::-webkit-scrollbar {
+    @apply w-1;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-[#050505];
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-white/10 rounded-full hover:bg-amber-500/50 transition-colors;
   }
 }
