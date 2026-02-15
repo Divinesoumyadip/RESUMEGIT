@@ -93,7 +93,7 @@ export default function MissionControl() {
   const [file, setFile] = useState<File | null>(null)
   const [dragActive, setDragActive] = useState(false)
   const [showResults, setShowResults] = useState(false)
-  const [credits, setCredits] = useState(10)
+  // Credits are now managed via the syncUser server action
   
   const tacticalAgents = [
     { id: 'ats', name: 'ATS Sentinel', icon: Shield },
