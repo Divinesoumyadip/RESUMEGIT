@@ -38,7 +38,7 @@ function SwarmCore() {
   )
 }
 
-// --- GLOBAL MISSION FEED (Hacker Marquee) ---
+// --- GLOBAL MISSION FEED ---
 function GlobalMissionFeed() {
   const missions = [
     "Operator #712 optimized an SDE Artifact for Google Bangalore",
@@ -118,8 +118,8 @@ export default function MissionControl() {
     { id: 'ats', name: 'ATS Sentinel', icon: Shield, status: 'ACTIVE' },
     { id: 'spyglass', name: 'Spyglass Radar', icon: Eye, status: 'ACTIVE' },
     { id: 'pulse', name: 'GitHub Pulse', icon: Github, status: 'ACTIVE' },
-    { id: 'interviewer', name: 'The Interviewer', icon: Mic, status: 'OFFLINE' },
-    { id: 'ghostwriter', name: 'Ghostwriter', icon: PenTool, status: 'OFFLINE' },
+    { id: 'interviewer', name: 'The Interviewer', icon: Mic, status: 'ACTIVE' },
+    { id: 'ghostwriter', name: 'Ghostwriter', icon: PenTool, status: 'ACTIVE' },
   ]
 
   const handleUploadAndOptimize = async () => {
@@ -155,7 +155,6 @@ export default function MissionControl() {
 
   return (
     <div className="min-h-screen bg-[#050505] text-white font-sans overflow-hidden">
-      {/* 3D BACKGROUND LAYER */}
       <div className="fixed inset-0 z-0 opacity-30 pointer-events-none">
         <Canvas>
           <Suspense fallback={null}>
@@ -164,12 +163,10 @@ export default function MissionControl() {
         </Canvas>
       </div>
 
-      {/* GRID OVERLAY */}
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_center,rgba(245,158,11,0.05)_0%,transparent_70%)] opacity-50 z-1" />
       <div className="fixed inset-0 bg-[linear-gradient(to_right,#111_1px,transparent_1px),linear-gradient(to_bottom,#111_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-20 pointer-events-none z-1" />
       
       <div className="relative z-10 flex min-h-screen">
-        {/* SIDEBAR */}
         <aside className="w-72 border-r border-white/5 bg-black/60 backdrop-blur-3xl p-6 flex flex-col gap-8 sticky top-0 h-screen">
           <div className="flex items-center gap-3 pb-6 border-b border-white/5">
             <div className="bg-amber-500 p-1.5 rounded-lg shadow-[0_0_25px_rgba(245,158,11,0.4)]">
@@ -201,9 +198,7 @@ export default function MissionControl() {
           </div>
         </aside>
 
-        {/* MAIN MISSION AREA */}
         <main className="flex-1 p-12 max-w-6xl mx-auto w-full overflow-y-auto pb-24">
-          {/* CREDITS INDICATOR */}
           <div className="absolute top-8 right-8 flex items-center gap-4 z-20">
             <div className="px-4 py-2 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-xl flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-amber-500" />
@@ -232,7 +227,6 @@ export default function MissionControl() {
                     </div>
                 </div>
 
-                {/* REFERRAL RADAR CARD */}
                 <div className="p-8 bg-amber-500/5 border border-amber-500/20 rounded-[2.5rem] relative overflow-hidden backdrop-blur-md">
                    <h3 className="text-amber-500 font-black mb-4 flex items-center gap-2 tracking-widest text-xs uppercase">
                      <Target className="w-4 h-4" /> Referral Radar: Jis University Network
@@ -259,7 +253,6 @@ export default function MissionControl() {
                       <PulseBadge />
                       <p className="text-gray-400 font-mono text-xs uppercase tracking-widest">Scanning Repositories for Verification...</p>
                    </div>
-                   
                    <div className="space-y-4">
                       {[
                         { name: "Customer 360 Bot", lang: "Python / FastAPI", status: "VERIFIED" },
@@ -277,6 +270,79 @@ export default function MissionControl() {
                         </div>
                       ))}
                    </div>
+                </div>
+              </motion.div>
+            )}
+
+            {activeAgent === 'interviewer' && (
+              <motion.div key="interviewer" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="space-y-8">
+                <div className="flex justify-between items-end border-b border-white/10 pb-6">
+                  <h2 className="text-6xl font-black uppercase tracking-tighter italic italic font-orbitron">The <span className="text-blue-500">Interviewer</span></h2>
+                  <div className="flex items-center gap-4">
+                    <span className="px-4 py-1 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-500 text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                      <Activity className="w-3 h-3 animate-pulse" /> Audio Uplink Ready
+                    </span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="p-8 bg-white/5 border border-white/10 rounded-[2.5rem] space-y-6 backdrop-blur-xl">
+                    <h3 className="text-blue-500 font-bold flex items-center gap-2 uppercase tracking-[0.2em] text-xs">
+                      <Target className="w-4 h-4" /> Technical Battle Plan
+                    </h3>
+                    <div className="space-y-4">
+                      {[
+                        "How would you optimize the real-time processing in your Customer 360 Bot?",
+                        "Explain the state management architecture of your Flutter Food Clone.",
+                        "Compare C++ Steganography performance vs. Python-based methods."
+                      ].map((q, i) => (
+                        <div key={i} className="p-4 bg-black/40 border border-white/5 rounded-2xl font-mono text-sm text-gray-400 hover:border-blue-500/30 transition-all cursor-help">
+                          <p className="text-blue-500 text-[10px] mb-1 font-black uppercase tracking-widest">Question {i+1}</p>
+                          {q}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="p-8 bg-white/5 border border-white/10 rounded-[2.5rem] space-y-6 backdrop-blur-xl">
+                    <h3 className="text-amber-500 font-bold flex items-center gap-2 uppercase tracking-[0.2em] text-xs">
+                      <Shield className="w-4 h-4" /> Behavioral Simulations
+                    </h3>
+                    <p className="text-gray-400 font-mono text-sm leading-relaxed italic">
+                      "The swarm predicts a high probability of questions regarding your transition from a Tier-3 college to high-growth startup engineering. Prepare the 'Master Competitive Programming' narrative."
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {activeAgent === 'ghostwriter' && (
+              <motion.div key="ghostwriter" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
+                <div className="flex justify-between items-end">
+                  <h2 className="text-6xl font-black uppercase tracking-tighter italic italic font-orbitron">Ghost<span className="text-amber-500">writer</span></h2>
+                  <p className="text-gray-500 font-mono text-xs uppercase tracking-[0.3em]">Cognitive Overwrite Enabled</p>
+                </div>
+                <div className="p-10 bg-white/5 border border-white/10 rounded-[3rem] space-y-10 backdrop-blur-xl">
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-4">
+                      <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                      <p className="text-[10px] font-mono text-gray-500 uppercase tracking-widest">Original Weakpoint</p>
+                    </div>
+                    <p className="text-gray-600 font-mono line-through text-lg">"Built a bot for customer service using Python and some AI libraries."</p>
+                  </div>
+                  <div className="flex items-center justify-center">
+                    <Zap className="text-amber-500 w-8 h-8 animate-bounce fill-amber-500/20" />
+                  </div>
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-4">
+                      <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]" />
+                      <p className="text-[10px] font-mono text-green-500 uppercase tracking-widest">Tactical Upgrade</p>
+                    </div>
+                    <motion.p 
+                      initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
+                      className="text-white font-mono text-2xl font-bold leading-relaxed border-l-2 border-amber-500 pl-6 shadow-[inset_10px_0_20px_-15px_rgba(245,158,11,0.3)]"
+                    >
+                      "Architected a high-performance Customer 360 Bot utilizing **FastAPI** and **Groq LPUs**, reducing response latency by 85% and automating 40% of standard ticket workflows."
+                    </motion.p>
+                  </div>
                 </div>
               </motion.div>
             )}
